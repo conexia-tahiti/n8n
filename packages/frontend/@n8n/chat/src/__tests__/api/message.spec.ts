@@ -11,11 +11,9 @@ describe('sendMessageStreaming', () => {
 		i18n: {
 			en: {
 				title: 'Test',
-				subtitle: 'Test',
 				footer: 'Test',
-				getStarted: 'Test',
 				inputPlaceholder: 'Test',
-				closeButtonTooltip: 'Test',
+				resetButtonTooltip: 'Test',
 			},
 		},
 	};

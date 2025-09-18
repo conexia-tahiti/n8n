@@ -140,13 +140,6 @@ describe('ChatInput', () => {
 		expect(mockWs.send).toHaveBeenCalledWith(expect.stringContaining('"chatInput":"Test message"'));
 	});
 
-	it('handles empty file list gracefully', () => {
-		wrapper.vm.files = null;
-
-		expect(() => wrapper.vm.attachFiles()).not.toThrow();
-		expect(wrapper.vm.attachFiles()).toEqual([]);
-	});
-
 	it('prevents submit when disabled', async () => {
 		const submitButton = wrapper.find('.chat-input-send-button');
 

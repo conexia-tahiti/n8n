@@ -8,8 +8,8 @@ export interface ChatOptions {
 	};
 	target?: string | Element;
 	mode?: 'window' | 'fullscreen';
-	showWindowCloseButton?: boolean;
-	showWelcomeScreen?: boolean;
+	showWindowResetButton?: boolean;
+	showAvatar?: string;
 	loadPreviousSession?: boolean;
 	chatInputKey?: string;
 	chatSessionKey?: string;
@@ -20,18 +20,15 @@ export interface ChatOptions {
 		string,
 		{
 			title: string;
-			subtitle: string;
 			footer: string;
-			getStarted: string;
 			inputPlaceholder: string;
-			closeButtonTooltip: string;
+			resetButtonTooltip: string;
 			[message: string]: string;
 		}
 	>;
 	theme?: {};
 	messageComponents?: Record<string, Component>;
 	disabled?: Ref<boolean>;
-	allowFileUploads?: Ref<boolean> | boolean;
-	allowedFilesMimeTypes?: Ref<string> | string;
 	enableStreaming?: boolean;
+	showBotInfoMessage?: boolean;
 }

@@ -16,11 +16,9 @@ describe('ChatPlugin', () => {
 				en: {
 					message: 'message',
 					title: 'title',
-					subtitle: 'subtitle',
 					footer: 'footer',
-					getStarted: 'getStarted',
 					inputPlaceholder: 'inputPlaceholder',
-					closeButtonTooltip: 'closeButtonTooltip',
+					resetButtonTooltip: 'resetButtonTooltip',
 				},
 			},
 		};
@@ -44,11 +42,9 @@ describe('ChatPlugin', () => {
 				en: {
 					message: 'message',
 					title: 'title',
-					subtitle: 'subtitle',
 					footer: 'footer',
-					getStarted: 'getStarted',
 					inputPlaceholder: 'inputPlaceholder',
-					closeButtonTooltip: 'closeButtonTooltip',
+					resetButtonTooltip: 'resetButtonTooltip',
 				},
 			},
 		};

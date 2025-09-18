@@ -21,22 +21,39 @@ describe('streamingHandlers', () => {
 	let receivedMessage: Ref<ChatMessageText | null>;
 	let streamingManager: StreamingMessageManager;
 
+	let waitingForResponse: Ref<boolean>;
+
 	beforeEach(() => {
 		messages = ref<ChatMessage[]>([]);
 		receivedMessage = ref<ChatMessageText | null>(null);
 		streamingManager = new StreamingMessageManager();
+		waitingForResponse = ref(true);
 		vi.clearAllMocks();
 	});
 
 	describe('handleStreamingChunk', () => {
 		it('should handle single-node streaming (no nodeId)', () => {
-			handleStreamingChunk('Hello', undefined, streamingManager, receivedMessage, messages);
+			handleStreamingChunk(
+				'Hello',
+				undefined,
+				streamingManager,
+				receivedMessage,
+				messages,
+				waitingForResponse,
+			);
 
 			expect(receivedMessage.value).toBeDefined();
 			expect(receivedMessage.value?.text).toBe('Hello');
 			expect(messages.value).toHaveLength(1);
 
-			handleStreamingChunk(' World!', undefined, streamingManager, receivedMessage, messages);
+			handleStreamingChunk(
+				' World!',
+				undefined,
+				streamingManager,
+				receivedMessage,
+				messages,
+				waitingForResponse,
+			);
 
 			expect(receivedMessage.value?.text).toBe('Hello World!');
 			expect(messages.value).toHaveLength(1);
@@ -56,6 +73,7 @@ describe('streamingHandlers', () => {
 				streamingManager,
 				receivedMessage,
 				messages,
+				waitingForResponse,
 				0,
 			);
 			handleStreamingChunk(
@@ -64,6 +82,7 @@ describe('streamingHandlers', () => {
 				streamingManager,
 				receivedMessage,
 				messages,
+				waitingForResponse,
 				1,
 			);
 
@@ -85,10 +104,26 @@ describe('streamingHandlers', () => {
 			expect(messages.value).toHaveLength(0);
 
 			// Add multiple chunks to the same run - message created on first chunk
-			handleStreamingChunk('Hello ', 'node-1', streamingManager, receivedMessage, messages, 0);
+			handleStreamingChunk(
+				'Hello ',
+				'node-1',
+				streamingManager,
+				receivedMessage,
+				messages,
+				waitingForResponse,
+				0,
+			);
 			expect(messages.value).toHaveLength(1);
 
-			handleStreamingChunk('World!', 'node-1', streamingManager, receivedMessage, messages, 0);
+			handleStreamingChunk(
+				'World!',
+				'node-1',
+				streamingManager,
+				receivedMessage,
+				messages,
+				waitingForResponse,
+				0,
+			);
 
 			const message = messages.value[0] as ChatMessageText;
 			expect(message.text).toBe('Hello World!');
@@ -100,7 +135,14 @@ describe('streamingHandlers', () => {
 			const invalidStreamingManager = null as unknown as StreamingMessageManager;
 
 			expect(() => {
-				handleStreamingChunk('test', 'node-1', invalidStreamingManager, receivedMessage, messages);
+				handleStreamingChunk(
+					'test',
+					'node-1',
+					invalidStreamingManager,
+					receivedMessage,
+					messages,
+					waitingForResponse,
+				);
 			}).not.toThrow();
 		});
 	});
@@ -115,7 +157,15 @@ describe('streamingHandlers', () => {
 
 			// But runs should be registered as active
 			// We can verify this by checking that chunks will create messages
-			handleStreamingChunk('test', 'node-1', streamingManager, receivedMessage, messages, 0);
+			handleStreamingChunk(
+				'test',
+				'node-1',
+				streamingManager,
+				receivedMessage,
+				messages,
+				waitingForResponse,
+				0,
+			);
 			expect(messages.value).toHaveLength(1);
 		});
 
@@ -125,7 +175,14 @@ describe('streamingHandlers', () => {
 			expect(messages.value).toHaveLength(0);
 
 			// Verify run is registered by adding a chunk
-			handleStreamingChunk('test', 'node-1', streamingManager, receivedMessage, messages);
+			handleStreamingChunk(
+				'test',
+				'node-1',
+				streamingManager,
+				receivedMessage,
+				messages,
+				waitingForResponse,
+			);
 			expect(messages.value).toHaveLength(1);
 		});
 

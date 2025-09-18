@@ -4,7 +4,7 @@ import { onMounted } from 'vue';
 import { createChat } from '@n8n/chat/index';
 import type { ChatOptions } from '@n8n/chat/types';
 
-const webhookUrl = 'http://localhost:5678/webhook/ad712f8b-3546-4d08-b049-e0d035334a4c/chat';
+const webhookUrl = 'http://localhost:5678/webhook/YOUR_WEBHOOK_ID/chat';
 
 const meta = {
 	title: 'Chat',
@@ -24,7 +24,6 @@ const meta = {
 	tags: ['autodocs'],
 };
 
-// eslint-disable-next-line import-x/no-default-export
 export default meta;
 type Story = StoryObj<typeof meta>;
 
@@ -44,15 +43,24 @@ export const Windowed: Story = {
 	} satisfies Partial<ChatOptions>,
 };
 
-export const WorkflowChat: Story = {
-	name: 'Workflow Chat',
+export const WithCustomization: Story = {
+	name: 'With Customization',
 	args: {
-		webhookUrl: 'http://localhost:5678/webhook/ad324b56-3e40-4b27-874f-58d150504edc/chat',
-		mode: 'fullscreen',
-		allowedFilesMimeTypes: 'image/*,text/*,audio/*, application/pdf',
-		allowFileUploads: true,
-		showWelcomeScreen: false,
-		initialMessages: [],
-		enableStreaming: false,
+		webhookUrl: 'https://your-n8n-instance.com/webhook/YOUR_WEBHOOK_ID/chat',
+		mode: 'window',
+		showWindowResetButton: true,
+		showAvatar: 'https://via.placeholder.com/64x64/3B82F6/FFFFFF?text=AI',
+		defaultLanguage: 'en',
+		initialMessages: ["👋 Hi there! I'm your AI assistant", 'How can I help you today?'],
+		i18n: {
+			en: {
+				title: 'AI Assistant',
+				footer: 'Powered by n8n - Your data is secure and private',
+				inputPlaceholder: 'Type your message here...',
+				resetButtonTooltip: 'Reset conversation',
+			},
+		},
+		enableStreaming: true,
+		showBotInfoMessage: true,
 	} satisfies Partial<ChatOptions>,
 };

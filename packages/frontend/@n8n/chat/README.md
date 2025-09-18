@@ -113,11 +113,12 @@ createChat({
 	},
 	target: '#n8n-chat',
 	mode: 'window',
+	showWindowResetButton: false,
+	showAvatar: '',
 	chatInputKey: 'chatInput',
 	chatSessionKey: 'sessionId',
 	loadPreviousSession: true,
 	metadata: {},
-	showWelcomeScreen: false,
 	defaultLanguage: 'en',
 	initialMessages: [
 		'Hi there! 👋',
@@ -126,13 +127,13 @@ createChat({
 	i18n: {
 		en: {
 			title: 'Hi there! 👋',
-			subtitle: "Start a chat. We're here to help you 24/7.",
 			footer: '',
-			getStarted: 'New Conversation',
 			inputPlaceholder: 'Type your question..',
+			resetButtonTooltip: 'Reset conversation',
 		},
 	},
 	enableStreaming: false,
+	showBotInfoMessage: false,
 });
 ```
 
@@ -161,11 +162,6 @@ createChat({
   - In `window` mode, the Chat window will be embedded in the target element as a chat toggle button and a fixed size chat window.
   - In `fullscreen` mode, the Chat will take up the entire width and height of its target container.
 
-### `showWelcomeScreen`
-- **Type**: `boolean`
-- **Default**: `false`
-- **Description**: Whether to show the welcome screen when the Chat window is opened.
-
 ### `chatInputKey`
 - **Type**: `string`
 - **Default**: `'chatInput'`
@@ -187,87 +183,77 @@ createChat({
 - **Description**: The default language of the Chat window. Currently only `en` is supported.
 
 ### `i18n`
-- **Type**: `{ [key: string]: Record<string, string> }`
+- **Type**: `{ [key: string]: { title: string, footer: string, inputPlaceholder: string, resetButtonTooltip: string, [key: string]: string } }`
 - **Description**: The i18n configuration for the Chat window. Currently only `en` is supported.
+  - `title`: The title displayed in the chat header
+  - `footer`: The footer text displayed at the bottom of the chat (supports HTML)
+  - `inputPlaceholder`: The placeholder text for the input field
+  - `resetButtonTooltip`: The tooltip text for the reset button
 
 ### `initialMessages`
 - **Type**: `string[]`
 - **Description**: The initial messages to be displayed in the Chat window.
 
-### `allowFileUploads`
-- **Type**: `Ref<boolean> | boolean`
+### `showWindowResetButton`
+- **Type**: `boolean`
 - **Default**: `false`
-- **Description**: Whether to allow file uploads in the chat. If set to `true`, users will be able to upload files through the chat interface.
+- **Description**: Whether to show a reset button in the chat header when in window mode. When clicked, it clears the chat history and starts a new session.
 
-### `allowedFilesMimeTypes`
-- **Type**: `Ref<string> | string`
+### `showAvatar`
+- **Type**: `string`
 - **Default**: `''`
-- **Description**: A comma-separated list of allowed MIME types for file uploads. Only applicable if `allowFileUploads` is set to `true`. If left empty, all file types are allowed. For example: `'image/*,application/pdf'`.
+- **Description**: URL of the avatar image to display in the chat toggle button and bot messages. If not provided, a default robot icon will be displayed.
 
-### enableStreaming
-- Type: boolean
-- Default: false
-- Description: Whether to enable streaming responses from the n8n workflow. If set to `true`, the chat will display responses as they are being generated, providing a more interactive experience. For this to work the workflow must be configured as well to return streaming responses.
+### `showBotInfoMessage`
+- **Type**: `boolean`
+- **Default**: `false`
+- **Description**: Whether to display bot avatar and name information in bot messages when available.
 
-## Customization
-The Chat window is entirely customizable using CSS variables.
+### `enableStreaming`
+- **Type**: `boolean`
+- **Default**: `false`
+- **Description**: Whether to enable streaming responses from the n8n workflow. If set to `true`, the chat will display responses as they are being generated, providing a more interactive experience. For this to work the workflow must be configured as well to return streaming responses.
+
+## Styling
+
+The chat interface is built with **Tailwind CSS** and uses modern utility-first styling. The default appearance includes:
+
+- **User messages**: Blue background (`bg-blue-600`) with white text
+- **Bot messages**: Light gray background (`bg-zinc-200/50`) with dark text
+- **Toggle button**: Black background with 56px size and subtle shadow
+- **Typography**: Clean sans-serif fonts with proper spacing
+- **Animations**: Smooth transitions and hover effects
+
+### Custom Styling
+
+You can customize the appearance by overriding the component styles using CSS. The main classes you can target include:
 
 ```css
-:root {
-	--chat--color-primary: #e74266;
-	--chat--color-primary-shade-50: #db4061;
-	--chat--color-primary-shade-100: #cf3c5c;
-	--chat--color-secondary: #20b69e;
-	--chat--color-secondary-shade-50: #1ca08a;
-	--chat--color-white: #ffffff;
-	--chat--color-light: #f2f4f8;
-	--chat--color-light-shade-50: #e6e9f1;
-	--chat--color-light-shade-100: #c2c5cc;
-	--chat--color-medium: #d2d4d9;
-	--chat--color-dark: #101330;
-	--chat--color-disabled: #777980;
-	--chat--color-typing: #404040;
-
-	--chat--spacing: 1rem;
-	--chat--border-radius: 0.25rem;
-	--chat--transition-duration: 0.15s;
-
-	--chat--window--width: 400px;
-	--chat--window--height: 600px;
-
-	--chat--header-height: auto;
-	--chat--header--padding: var(--chat--spacing);
-	--chat--header--background: var(--chat--color-dark);
-	--chat--header--color: var(--chat--color-light);
-	--chat--header--border-top: none;
-	--chat--header--border-bottom: none;
-	--chat--header--border-bottom: none;
-	--chat--header--border-bottom: none;
-	--chat--heading--font-size: 2em;
-	--chat--header--color: var(--chat--color-light);
-	--chat--subtitle--font-size: inherit;
-	--chat--subtitle--line-height: 1.8;
-
-	--chat--textarea--height: 50px;
-
-	--chat--message--font-size: 1rem;
-	--chat--message--padding: var(--chat--spacing);
-	--chat--message--border-radius: var(--chat--border-radius);
-	--chat--message-line-height: 1.8;
-	--chat--message--bot--background: var(--chat--color-white);
-	--chat--message--bot--color: var(--chat--color-dark);
-	--chat--message--bot--border: none;
-	--chat--message--user--background: var(--chat--color-secondary);
-	--chat--message--user--color: var(--chat--color-white);
-	--chat--message--user--border: none;
-	--chat--message--pre--background: rgba(0, 0, 0, 0.05);
-
-	--chat--toggle--background: var(--chat--color-primary);
-	--chat--toggle--hover--background: var(--chat--color-primary-shade-50);
-	--chat--toggle--active--background: var(--chat--color-primary-shade-100);
-	--chat--toggle--color: var(--chat--color-white);
-	--chat--toggle--size: 64px;
+/* User message styling */
+.chat-message-user-content {
+  /* Override user message appearance */
 }
+
+/* Bot message styling */
+.chat-message-bot-content {
+  /* Override bot message appearance */
+}
+
+/* Chat toggle button */
+.chat-window-toggle {
+  /* Override toggle button appearance */
+}
+```
+
+### Avatar Customization
+
+Use the `showAvatar` option to display a custom avatar in the chat toggle and bot messages:
+
+```ts
+createChat({
+  showAvatar: 'https://your-domain.com/avatar.png',
+  // ... other options
+});
 ```
 
 ## Caveats

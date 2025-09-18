@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import Close from 'virtual:icons/mdi/close';
+import IconRobotExcited from 'virtual:icons/mdi/robot-excited';
+import Refresh from 'virtual:icons/mdi/refresh';
 import { computed, nextTick, onMounted } from 'vue';
 
-import GetStarted from '@n8n/chat/components/GetStarted.vue';
-import GetStartedFooter from '@n8n/chat/components/GetStartedFooter.vue';
 import Input from '@n8n/chat/components/Input.vue';
 import Layout from '@n8n/chat/components/Layout.vue';
 import MessagesList from '@n8n/chat/components/MessagesList.vue';
@@ -16,17 +15,7 @@ const chatStore = useChat();
 const { messages, currentSessionId } = chatStore;
 const { options } = useOptions();
 
-const showCloseButton = computed(() => options.mode === 'window' && options.showWindowCloseButton);
-
-async function getStarted() {
-	if (!chatStore.startNewSession) {
-		return;
-	}
-	void chatStore.startNewSession();
-	void nextTick(() => {
-		chatEventBus.emit('scrollToBottom');
-	});
-}
+const showResetButton = computed(() => options.mode === 'window' && options.showWindowResetButton);
 
 async function initialize() {
 	if (!chatStore.loadPreviousSession) {
@@ -38,14 +27,24 @@ async function initialize() {
 	});
 }
 
-function closeChat() {
-	chatEventBus.emit('close');
+async function resetChat() {
+	if (chatStore.startNewSession) {
+		await chatStore.startNewSession();
+		void nextTick(() => {
+			chatEventBus.emit('scrollToBottom');
+		});
+	}
 }
 
 onMounted(async () => {
 	await initialize();
-	if (!options.showWelcomeScreen && !currentSessionId.value) {
-		await getStarted();
+	if (!currentSessionId.value) {
+		if (chatStore.startNewSession) {
+			await chatStore.startNewSession();
+			void nextTick(() => {
+				chatEventBus.emit('scrollToBottom');
+			});
+		}
 	}
 });
 </script>
@@ -53,45 +52,54 @@ onMounted(async () => {
 <template>
 	<Layout class="chat-wrapper">
 		<template #header>
-			<div class="chat-heading">
-				<h1>
-					{{ t('title') }}
-				</h1>
-				<button
-					v-if="showCloseButton"
-					class="chat-close-button"
-					:title="t('closeButtonTooltip')"
-					@click="closeChat"
+			<div class="my-4 flex h-10 items-center">
+				<span
+					class="relative flex shrink-0 overflow-hidden rounded-full mr-2 size-10 border border-white/[0.10] items-center justify-center"
 				>
-					<Close height="18" width="18" />
+					<img
+						v-if="options.showAvatar"
+						:src="options.showAvatar"
+						v-bind:alt="t('title')"
+						class="w-full h-full object-cover"
+					/>
+					<IconRobotExcited v-else height="24" width="24" class="text-black" />
+				</span>
+				<div class="flex flex-col">
+					<h1 class="font-medium text-sm tracking-tight">
+						{{ t('title') }}
+					</h1>
+				</div>
+			</div>
+			<div class="flex items-center">
+				<button
+					v-if="showResetButton"
+					class="flex border-none bg-transparent cursor-pointer transition-colors hover:animate-spin"
+					:title="t('resetButtonTooltip')"
+					@click="resetChat"
+				>
+					<Refresh height="20" width="20" />
 				</button>
 			</div>
-			<p v-if="t('subtitle')">{{ t('subtitle') }}</p>
 		</template>
-		<GetStarted v-if="!currentSessionId && options.showWelcomeScreen" @click:button="getStarted" />
-		<MessagesList v-else :messages="messages" />
-		<template #footer>
+		<MessagesList :messages="messages" />
+		<template #input>
 			<Input v-if="currentSessionId" />
-			<GetStartedFooter v-else />
+		</template>
+		<template #footer>
+			<div class="w-full overflow-x-hidden whitespace-pre-wrap break-words text-center">
+				<div class="mb-1">
+					{{ t('footer') }}
+				</div>
+				<div>
+					<a
+						href="https://conexia-agency.com/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="font-bold underline hover:underline"
+						>Service Conexia</a
+					>
+				</div>
+			</div>
 		</template>
 	</Layout>
 </template>
-
-<style lang="scss">
-.chat-heading {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.chat-close-button {
-	display: flex;
-	border: none;
-	background: none;
-	cursor: pointer;
-
-	&:hover {
-		color: var(--chat--close--button--color-hover, var(--chat--color-primary));
-	}
-}
-</style>

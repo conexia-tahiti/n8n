@@ -1,10 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
 
-import type { ChatMessage } from '@n8n/chat/types';
-
-import { Message } from './index';
-
 const props = withDefaults(
 	defineProps<{
 		animation?: 'bouncing' | 'scaling';
@@ -14,78 +10,69 @@ const props = withDefaults(
 	},
 );
 
-const message: ChatMessage = {
-	id: 'typing',
-	text: '',
-	sender: 'bot',
-};
-const messageContainer = ref<InstanceType<typeof Message>>();
+const messageContainer = ref<HTMLDivElement>();
 const classes = computed(() => {
 	return {
-		// eslint-disable-next-line @typescript-eslint/naming-convention
-		'chat-message-typing': true,
 		[`chat-message-typing-animation-${props.animation}`]: true,
 	};
 });
 
+const scrollToView = () => {
+	if (messageContainer.value?.scrollIntoView) {
+		messageContainer.value.scrollIntoView({
+			block: 'start',
+		});
+	}
+};
+
 onMounted(() => {
-	messageContainer.value?.scrollToView();
+	scrollToView();
 });
+
+defineExpose({ scrollToView });
 </script>
 <template>
-	<Message
+	<div
 		ref="messageContainer"
-		:class="classes"
-		:message="message"
+		class="relative flex w-full max-w-full flex-col items-baseline gap-1"
 		data-test-id="chat-message-typing"
 	>
-		<div class="chat-message-typing-body">
-			<span class="chat-message-typing-circle"></span>
-			<span class="chat-message-typing-circle"></span>
-			<span class="chat-message-typing-circle"></span>
+		<div :class="classes" class="chat-message-bot-typing chat-message-typing">
+			<div class="flex justify-center items-center">
+				<span class="typing-dot block h-1.5 w-1.5 rounded-full bg-zinc-600 m-0.5"></span>
+				<span class="typing-dot block h-1.5 w-1.5 rounded-full bg-zinc-600 m-0.5"></span>
+				<span class="typing-dot block h-1.5 w-1.5 rounded-full bg-zinc-600 m-0.5"></span>
+			</div>
 		</div>
-	</Message>
+	</div>
 </template>
-<style lang="scss">
-.chat-message-typing {
+<style scoped>
+.chat-message-bot-typing {
+	@apply hyphens-auto whitespace-normal text-wrap break-words text-left text-sm leading-5 antialiased px-4 py-3 bg-zinc-200/50 text-zinc-800 rounded-[20px];
+	width: fit-content;
 	max-width: 80px;
+}
 
-	&.chat-message-typing-animation-scaling .chat-message-typing-circle {
-		animation: chat-message-typing-animation-scaling 800ms ease-in-out infinite;
-		animation-delay: 3600ms;
-	}
+.chat-message-bot-typing.chat-message-typing-animation-scaling .typing-dot {
+	animation: chat-message-typing-animation-scaling 800ms ease-in-out infinite;
+	animation-delay: 3600ms;
+}
 
-	&.chat-message-typing-animation-bouncing .chat-message-typing-circle {
-		animation: chat-message-typing-animation-bouncing 800ms ease-in-out infinite;
-		animation-delay: 3600ms;
-	}
+.chat-message-bot-typing.chat-message-typing-animation-bouncing .typing-dot {
+	animation: chat-message-typing-animation-bouncing 800ms ease-in-out infinite;
+	animation-delay: 3600ms;
+}
 
-	.chat-message-typing-body {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
+.chat-message-bot-typing .typing-dot:nth-child(1) {
+	animation-delay: 0ms;
+}
 
-	.chat-message-typing-circle {
-		display: block;
-		height: 10px;
-		width: 10px;
-		border-radius: 50%;
-		background-color: var(--chat--color-typing);
-		margin: 3px;
+.chat-message-bot-typing .typing-dot:nth-child(2) {
+	animation-delay: 333ms;
+}
 
-		&:nth-child(1) {
-			animation-delay: 0ms;
-		}
-
-		&:nth-child(2) {
-			animation-delay: 333ms;
-		}
-
-		&:nth-child(3) {
-			animation-delay: 666ms;
-		}
-	}
+.chat-message-bot-typing .typing-dot:nth-child(3) {
+	animation-delay: 666ms;
 }
 
 @keyframes chat-message-typing-animation-scaling {
@@ -111,7 +98,7 @@ onMounted(() => {
 		transform: translateY(0);
 	}
 	50% {
-		transform: translateY(-10px);
+		transform: translateY(-4px);
 	}
 	100% {
 		transform: translateY(0);

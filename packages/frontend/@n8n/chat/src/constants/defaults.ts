@@ -12,16 +12,13 @@ export const defaultOptions: ChatOptions = {
 	chatInputKey: 'chatInput',
 	chatSessionKey: 'sessionId',
 	defaultLanguage: 'en',
-	showWelcomeScreen: false,
 	initialMessages: ['Hi there! 👋', 'My name is Nathan. How can I assist you today?'],
 	i18n: {
 		en: {
 			title: 'Hi there! 👋',
-			subtitle: "Start a chat. We're here to help you 24/7.",
 			footer: '',
-			getStarted: 'New Conversation',
 			inputPlaceholder: 'Type your question..',
-			closeButtonTooltip: 'Close chat',
+			resetButtonTooltip: 'Reset chat',
 		},
 	},
 	theme: {},

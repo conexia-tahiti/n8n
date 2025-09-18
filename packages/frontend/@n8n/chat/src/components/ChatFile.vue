@@ -50,56 +50,32 @@ function onDelete() {
 	</div>
 </template>
 
-<style scoped lang="scss">
+<style scoped>
 .chat-file {
-	display: flex;
-	align-items: center;
-	flex-wrap: nowrap;
-	width: fit-content;
-	max-width: 15rem;
-	padding: 0.5rem;
-	border-radius: 0.25rem;
-	gap: 0.25rem;
-	font-size: 0.75rem;
-	background: white;
-	color: var(--chat--color-dark);
-	border: 1px solid var(--chat--color-dark);
-	cursor: pointer;
+	@apply flex items-center flex-nowrap w-fit max-w-[15rem] p-2 rounded gap-1 text-xs;
+	@apply bg-white text-gray-900 border border-gray-900 cursor-pointer;
 }
 
 .chat-file-name-tooltip {
-	overflow: hidden;
+	@apply overflow-hidden;
 }
+
 .chat-file-name {
-	overflow: hidden;
-	max-width: 100%;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	margin: 0;
+	@apply overflow-hidden max-w-full text-ellipsis whitespace-nowrap m-0;
 }
+
 .chat-file-delete,
 .chat-file-preview {
-	background: none;
-	border: none;
-	display: block;
-	cursor: pointer;
-	flex-shrink: 0;
+	@apply bg-transparent border-none block cursor-pointer flex-shrink-0;
 }
 
 .chat-file-delete {
-	position: relative;
-	&:hover {
-		color: red;
-	}
+	@apply relative hover:text-red-500;
+}
 
-	/* Increase hit area for better clickability */
-	&:before {
-		content: '';
-		position: absolute;
-		top: -10px;
-		right: -10px;
-		bottom: -10px;
-		left: -10px;
-	}
+/* Increase hit area for better clickability */
+.chat-file-delete:before {
+	content: '';
+	@apply absolute -inset-[10px];
 }
 </style>

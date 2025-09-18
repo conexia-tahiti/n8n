@@ -13,16 +13,17 @@ export function handleStreamingChunk(
 	streamingManager: StreamingMessageManager,
 	receivedMessage: Ref<ChatMessageText | null>,
 	messages: Ref<ChatMessage[]>,
+	waitingForResponse: Ref<boolean>,
 	runIndex?: number,
 ): void {
 	try {
-		// Only skip empty chunks, but not whitespace only chunks
 		if (chunk === '') {
 			return;
 		}
 
+		waitingForResponse.value = false;
+
 		if (!nodeId) {
-			// Simple single-node streaming (backwards compatibility)
 			if (!receivedMessage.value) {
 				receivedMessage.value = createBotMessage();
 				messages.value.push(receivedMessage.value);
@@ -36,15 +37,12 @@ export function handleStreamingChunk(
 			updateMessageInArray(messages.value, receivedMessage.value.id, updatedMessage);
 			receivedMessage.value = updatedMessage;
 		} else {
-			// Multi-run streaming with separate messages per runIndex
-			// Create message on first chunk if it doesn't exist
 			let runMessage = streamingManager.getRunMessage(nodeId, runIndex);
 			if (!runMessage) {
 				runMessage = streamingManager.addRunToActive(nodeId, runIndex);
 				messages.value.push(runMessage);
 			}
 
-			// Add chunk to the run
 			const updatedMessage = streamingManager.addChunkToRun(nodeId, chunk, runIndex);
 			if (updatedMessage) {
 				updateMessageInArray(messages.value, updatedMessage.id, updatedMessage);
@@ -56,7 +54,6 @@ export function handleStreamingChunk(
 		});
 	} catch (error) {
 		console.error('Error handling stream chunk:', error);
-		// Continue gracefully without breaking the stream
 	}
 }
 
@@ -66,8 +63,6 @@ export function handleNodeStart(
 	runIndex?: number,
 ): void {
 	try {
-		// Just register the run as starting, don't create a message yet
-		// Message will be created when first chunk arrives
 		streamingManager.registerRunStart(nodeId, runIndex);
 	} catch (error) {
 		console.error('Error handling node start:', error);

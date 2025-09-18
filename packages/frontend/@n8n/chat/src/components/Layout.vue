@@ -23,65 +23,25 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-	<main class="chat-layout">
-		<div v-if="$slots.header" class="chat-header">
+	<main class="group relative flex h-full flex-col bg-white shadow-lg backdrop-blur-sm">
+		<header v-if="$slots.header" class="relative flex items-center justify-between px-5 text-black">
 			<slot name="header" />
-		</div>
-		<div v-if="$slots.default" ref="chatBodyRef" class="chat-body">
+		</header>
+		<div
+			v-if="$slots.default"
+			ref="chatBodyRef"
+			class="-mb-2 relative flex-1 basis-full overflow-y-hidden scroll-smooth flex flex-col shadow-inner"
+		>
 			<slot />
 		</div>
-		<div v-if="$slots.footer" class="chat-footer">
-			<slot name="footer" />
+		<div v-if="$slots.input" class="relative z-50 flex shrink-0 flex-col justify-end">
+			<slot name="input" />
 		</div>
+		<footer
+			v-if="$slots.footer"
+			class="flex min-h-10 w-full max-w-full shrink-0 items-center justify-center gap-2 overflow-hidden text-nowrap px-4 pb-4 font-medium text-xs text-zinc-500 leading-[1.4]"
+		>
+			<slot name="footer" />
+		</footer>
 	</main>
 </template>
-
-<style lang="scss">
-.chat-layout {
-	width: 100%;
-	height: 100%;
-	display: flex;
-	overflow-y: auto;
-	flex-direction: column;
-	font-family: var(--chat--font-family);
-
-	.chat-header {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		gap: 1em;
-		height: var(--chat--header-height);
-		padding: var(--chat--header--padding);
-		background: var(--chat--header--background);
-		color: var(--chat--header--color);
-		border-top: var(--chat--header--border-top);
-		border-bottom: var(--chat--header--border-bottom);
-		border-left: var(--chat--header--border-left);
-		border-right: var(--chat--header--border-right);
-		h1 {
-			font-size: var(--chat--heading--font-size);
-			color: var(--chat--header--color);
-		}
-		p {
-			font-size: var(--chat--subtitle--font-size);
-			line-height: var(--chat--subtitle--line-height);
-		}
-	}
-
-	.chat-body {
-		background: var(--chat--body--background);
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-		overflow-y: auto;
-		position: relative;
-		min-height: 100px;
-	}
-
-	.chat-footer {
-		border-top: 1px solid var(--chat--color-light-shade-100);
-		background: var(--chat--footer--background);
-		color: var(--chat--footer--color);
-	}
-}
-</style>

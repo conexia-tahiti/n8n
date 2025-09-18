@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { useFileDialog } from '@vueuse/core';
 import { v4 as uuidv4 } from 'uuid';
-import IconPaperclip from 'virtual:icons/mdi/paperclip';
 import IconSend from 'virtual:icons/mdi/send';
 import { computed, onMounted, onUnmounted, ref, unref } from 'vue';
 
@@ -9,7 +7,6 @@ import { useI18n, useChat, useOptions } from '@n8n/chat/composables';
 import { chatEventBus } from '@n8n/chat/event-buses';
 import { constructChatWebsocketUrl } from '@n8n/chat/utils';
 
-import ChatFile from './ChatFile.vue';
 import type { ChatMessage } from '../types';
 
 export interface ChatInputProps {
@@ -34,7 +31,6 @@ const { options } = useOptions();
 const chatStore = useChat();
 const { waitingForResponse } = chatStore;
 
-const files = ref<FileList | null>(null);
 const chatTextArea = ref<HTMLTextAreaElement | null>(null);
 const input = ref('');
 const isSubmitting = ref(false);
@@ -47,43 +43,6 @@ const isSubmitDisabled = computed(() => {
 });
 
 const isInputDisabled = computed(() => options.disabled?.value === true);
-const isFileUploadDisabled = computed(
-	() => isFileUploadAllowed.value && unref(waitingForResponse) && !options.disabled?.value,
-);
-const isFileUploadAllowed = computed(() => unref(options.allowFileUploads) === true);
-const allowedFileTypes = computed(() => unref(options.allowedFilesMimeTypes));
-
-const styleVars = computed(() => {
-	const controlsCount = isFileUploadAllowed.value ? 2 : 1;
-	return {
-		'--controls-count': controlsCount,
-	};
-});
-
-const {
-	open: openFileDialog,
-	reset: resetFileDialog,
-	onChange,
-} = useFileDialog({
-	multiple: true,
-	reset: false,
-});
-
-onChange((newFiles) => {
-	if (!newFiles) return;
-	const newFilesDT = new DataTransfer();
-	// Add current files
-	if (files.value) {
-		for (let i = 0; i < files.value.length; i++) {
-			newFilesDT.items.add(files.value[i]);
-		}
-	}
-
-	for (let i = 0; i < newFiles.length; i++) {
-		newFilesDT.items.add(newFiles[i]);
-	}
-	files.value = newFilesDT.files;
-});
 
 onMounted(() => {
 	chatEventBus.on('focusInput', focusChatInput);
@@ -99,7 +58,6 @@ onMounted(() => {
 			}
 		});
 
-		// Start observing the textarea
 		resizeObserver.value.observe(chatTextArea.value);
 	}
 });
@@ -132,20 +90,7 @@ function setInputValue(value: string) {
 	focusChatInput();
 }
 
-function attachFiles() {
-	if (files.value) {
-		const filesToAttach = Array.from(files.value);
-		resetFileDialog();
-		files.value = null;
-		return filesToAttach;
-	}
-
-	return [];
-}
-
 function setupWebsocketConnection(executionId: string) {
-	// if webhookUrl is not defined onSubmit is called from integrated chat
-	// do not setup websocket as it would be handled by the integrated chat
 	if (options.webhookUrl && chatStore.currentSessionId.value) {
 		try {
 			const wsUrl = constructChatWebsocketUrl(
@@ -183,36 +128,9 @@ function setupWebsocketConnection(executionId: string) {
 				chatStore.waitingForResponse.value = false;
 			};
 		} catch (error) {
-			// do not throw error here as it should work with n8n versions that do not support websockets
 			console.error('Error setting up websocket connection', error);
 		}
 	}
-}
-
-async function processFiles(data: File[] | undefined) {
-	if (!data || data.length === 0) return [];
-
-	const filePromises = data.map(async (file) => {
-		// We do not need to await here as it will be awaited on the return by Promise.all
-		// eslint-disable-next-line @typescript-eslint/return-await
-		return new Promise<{ name: string; type: string; data: string }>((resolve, reject) => {
-			const reader = new FileReader();
-
-			reader.onload = () =>
-				resolve({
-					name: file.name,
-					type: file.type,
-					data: reader.result as string,
-				});
-
-			reader.onerror = () =>
-				reject(new Error(`Error reading file: ${reader.error?.message ?? 'Unknown error'}`));
-
-			reader.readAsDataURL(file);
-		});
-	});
-
-	return await Promise.all(filePromises);
 }
 
 async function respondToChatNode(ws: WebSocket, messageText: string) {
@@ -220,7 +138,6 @@ async function respondToChatNode(ws: WebSocket, messageText: string) {
 		id: uuidv4(),
 		text: messageText,
 		sender: 'user',
-		files: files.value ? attachFiles() : undefined,
 	};
 
 	chatStore.messages.value.push(sentMessage);
@@ -229,7 +146,6 @@ async function respondToChatNode(ws: WebSocket, messageText: string) {
 			sessionId: chatStore.currentSessionId.value,
 			action: 'sendMessage',
 			chatInput: messageText,
-			files: await processFiles(sentMessage.files),
 		}),
 	);
 	chatStore.waitingForResponse.value = true;
@@ -252,7 +168,7 @@ async function onSubmit(event: MouseEvent | KeyboardEvent) {
 		return;
 	}
 
-	const response = await chatStore.sendMessage(messageText, attachFiles());
+	const response = await chatStore.sendMessage(messageText);
 
 	if (response?.executionId) {
 		setupWebsocketConnection(response.executionId);
@@ -270,19 +186,6 @@ async function onSubmitKeydown(event: KeyboardEvent) {
 	adjustTextAreaHeight();
 }
 
-function onFileRemove(file: File) {
-	if (!files.value) return;
-
-	const dt = new DataTransfer();
-	for (let i = 0; i < files.value.length; i++) {
-		const currentFile = files.value[i];
-		if (file.name !== currentFile.name) dt.items.add(currentFile);
-	}
-
-	resetFileDialog();
-	files.value = dt.files;
-}
-
 function onKeyDown(event: KeyboardEvent) {
 	if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
 		event.preventDefault();
@@ -294,173 +197,44 @@ function onKeyDown(event: KeyboardEvent) {
 	}
 }
 
-function onOpenFileDialog() {
-	if (isFileUploadDisabled.value) return;
-	openFileDialog({ accept: unref(allowedFileTypes) });
-}
-
 function adjustTextAreaHeight() {
 	const textarea = chatTextArea.value;
 	if (!textarea) return;
-	// Set to content minimum to get the right scrollHeight
-	textarea.style.height = 'var(--chat--textarea--height)';
-	// Get the new height, with a small buffer for padding
+	textarea.style.height = '20px';
 	const newHeight = Math.min(textarea.scrollHeight, 480); // 30rem
 	textarea.style.height = `${newHeight}px`;
 }
 </script>
 
 <template>
-	<div class="chat-input" :style="styleVars" @keydown.stop="onKeyDown">
-		<div class="chat-inputs">
-			<div v-if="$slots.leftPanel" class="chat-input-left-panel">
-				<slot name="leftPanel" />
-			</div>
-			<textarea
-				ref="chatTextArea"
-				v-model="input"
-				data-test-id="chat-input"
-				:disabled="isInputDisabled"
-				:placeholder="t(props.placeholder)"
-				@keydown.enter="onSubmitKeydown"
-				@input="adjustTextAreaHeight"
-				@mousedown="adjustTextAreaHeight"
-				@focus="adjustTextAreaHeight"
-			/>
-
-			<div class="chat-inputs-controls">
-				<button
-					v-if="isFileUploadAllowed"
-					:disabled="isFileUploadDisabled"
-					class="chat-input-file-button"
-					data-test-id="chat-attach-file-button"
-					@click="onOpenFileDialog"
-				>
-					<IconPaperclip height="24" width="24" />
-				</button>
-				<button :disabled="isSubmitDisabled" class="chat-input-send-button" @click="onSubmit">
-					<IconSend height="24" width="24" />
-				</button>
-			</div>
+	<div
+		class="flex-row items-center px-4 py-2.5 relative z-50 mx-4 mb-4 flex min-h-13 rounded-2xl bg-white border-[1.5px] border-zinc-100 shadow-md focus-within:border-[1.5px] focus-within:border-zinc-950"
+		@keydown.stop="onKeyDown"
+	>
+		<div v-if="$slots.leftPanel" class="w-8 ml-1.5">
+			<slot name="leftPanel" />
 		</div>
-		<div v-if="files?.length && (!isSubmitting || waitingForChatResponse)" class="chat-files">
-			<ChatFile
-				v-for="file in files"
-				:key="file.name"
-				:file="file"
-				:is-removable="true"
-				:is-previewable="true"
-				@remove="onFileRemove"
-			/>
+		<textarea
+			ref="chatTextArea"
+			v-model="input"
+			data-test-id="chat-input"
+			:disabled="isInputDisabled"
+			:placeholder="t(props.placeholder)"
+			class="field-sizing-content flex w-full rounded-md border-input bg-transparent text-base transition-color disabled:pointer-events-none disabled:cursor-not-allowed aria-invalid:border-destructive file:font-medium file:text-foreground file:text-sm md:text-sm disabled:opacity-50 disabled:outline-none focus-visible:outline aria-invalid:outline-destructive/20 max-h-40 min-h-5 resize-none border-0 px-1 py-0 outline-none text-zinc-950 placeholder:text-zinc-400 group-data-[mobile=true]:text-[16px] sm:text-sm pointer-events-auto overflow-y-auto box-border appearance-none leading-tight focus-visible:ring-0 focus-visible:ring-offset-0 selection:bg-zinc-900 selection:text-white flex-1"
+			@keydown.enter="onSubmitKeydown"
+			@input="adjustTextAreaHeight"
+			@mousedown="adjustTextAreaHeight"
+			@focus="adjustTextAreaHeight"
+		/>
+
+		<div class="flex flex-row gap-1">
+			<button
+				:disabled="isSubmitDisabled"
+				class="flex items-center justify-center gap-2 whitespace-nowrap font-medium text-sm outline-hidden transition-all duration-200 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 shadow-inner-sm rounded-md p-1.5 h-7 w-7 bg-transparent shadow-none hover:bg-zinc-100/90"
+				@click="onSubmit"
+			>
+				<IconSend height="20" width="20" />
+			</button>
 		</div>
 	</div>
 </template>
-
-<style lang="scss" scoped>
-.chat-input {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	width: 100%;
-	flex-direction: column;
-	position: relative;
-
-	* {
-		box-sizing: border-box;
-	}
-}
-.chat-inputs {
-	width: 100%;
-	display: flex;
-	justify-content: center;
-	align-items: flex-end;
-
-	textarea {
-		font-family: inherit;
-		font-size: var(--chat--input--font-size);
-		width: 100%;
-		border: var(--chat--input--border, 0);
-		border-radius: var(--chat--input--border-radius);
-		padding: var(--chat--input--padding);
-		min-height: var(--chat--textarea--height, 2.5rem); // Set a smaller initial height
-		max-height: var(--chat--textarea--max-height);
-		height: var(--chat--textarea--height, 2.5rem); // Set initial height same as min-height
-		resize: none;
-		overflow-y: auto;
-		background: var(--chat--input--background, white);
-		color: var(--chat--input--text-color, initial);
-		outline: none;
-		line-height: var(--chat--input--line-height, 1.5);
-
-		&::placeholder {
-			font-size: var(--chat--input--placeholder--font-size, var(--chat--input--font-size));
-		}
-		&:focus,
-		&:hover {
-			border-color: var(--chat--input--border-active, 0);
-		}
-	}
-}
-.chat-inputs-controls {
-	display: flex;
-}
-.chat-input-send-button,
-.chat-input-file-button {
-	height: var(--chat--textarea--height);
-	width: var(--chat--textarea--height);
-	background: var(--chat--input--send--button--background, white);
-	cursor: pointer;
-	color: var(--chat--input--send--button--color, var(--chat--color-secondary));
-	border: 0;
-	font-size: 24px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	transition: color var(--chat--transition-duration) ease;
-
-	svg {
-		min-width: fit-content;
-	}
-
-	&[disabled] {
-		cursor: no-drop;
-		color: var(--chat--color-disabled);
-	}
-
-	.chat-input-send-button {
-		&:hover,
-		&:focus {
-			background: var(
-				--chat--input--send--button--background-hover,
-				var(--chat--input--send--button--background)
-			);
-			color: var(--chat--input--send--button--color-hover);
-		}
-	}
-}
-.chat-input-file-button {
-	background: var(--chat--input--file--button--background, white);
-	color: var(--chat--input--file--button--color);
-
-	&:hover {
-		background: var(--chat--input--file--button--background-hover);
-		color: var(--chat--input--file--button--color-hover);
-	}
-}
-
-.chat-files {
-	display: flex;
-	overflow-x: hidden;
-	overflow-y: auto;
-	width: 100%;
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	padding: var(--chat--files-spacing);
-}
-
-.chat-input-left-panel {
-	width: var(--chat--input--left--panel--width);
-	margin-left: 0.4rem;
-}
-</style>

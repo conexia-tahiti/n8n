@@ -14,7 +14,6 @@ import {
 	getChatWindowToggle,
 	getChatWindowWrapper,
 	getChatWrapper,
-	getGetStartedButton,
 	getMountingTarget,
 } from '@n8n/chat/__tests__/utils';
 import { createChat } from '@n8n/chat/index';
@@ -78,11 +77,7 @@ describe('createChat()', () => {
 
 			app = createChat({
 				mode: 'fullscreen',
-				showWelcomeScreen: true,
 			});
-
-			const getStartedButton = getGetStartedButton();
-			await fireEvent.click(getStartedButton as HTMLElement);
 
 			expect(fetchSpy.mock.calls[0][1]).toEqual(
 				expect.objectContaining({

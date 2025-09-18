@@ -46,7 +46,7 @@ describe('ChatPlugin', () => {
 					footer: '',
 					getStarted: 'Start',
 					inputPlaceholder: 'Type a message...',
-					closeButtonTooltip: 'Close',
+					resetButtonTooltip: 'Reset',
 				},
 			},
 		};
@@ -146,9 +146,9 @@ describe('ChatPlugin', () => {
 			const mockResponse = { output: 'File received!' };
 			vi.mocked(api.sendMessage).mockResolvedValueOnce(mockResponse);
 
-			await chatStore.sendMessage('Here is a file', [mockFile]);
+			await chatStore.sendMessage('Here is a file');
 
-			expect(api.sendMessage).toHaveBeenCalledWith('Here is a file', [mockFile], null, mockOptions);
+			expect(api.sendMessage).toHaveBeenCalledWith('Here is a file', [], null, mockOptions);
 
 			expect(chatStore.messages.value[0]).toMatchObject({
 				text: 'Here is a file',
@@ -237,15 +237,14 @@ describe('ChatPlugin', () => {
 		});
 
 		it('should handle streaming with files', async () => {
-			const mockFile = new File(['content'], 'test.txt', { type: 'text/plain' });
 			const mockStreamingResponse = { hasReceivedChunks: true };
 			vi.mocked(api.sendMessageStreaming).mockResolvedValueOnce(mockStreamingResponse);
 
-			await chatStore.sendMessage('Stream with file', [mockFile]);
+			await chatStore.sendMessage('Stream with file');
 
 			expect(api.sendMessageStreaming).toHaveBeenCalledWith(
 				'Stream with file',
-				[mockFile],
+				[],
 				null,
 				mockOptions,
 				expect.objectContaining({
