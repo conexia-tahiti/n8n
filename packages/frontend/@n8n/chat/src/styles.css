@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure the chat container is always fixed positioned */
+#n8n-chat {
+	position: fixed !important;
+	z-index: 9999;
+	right: 1rem !important;
+	bottom: 1rem !important;
+}
+
 @layer utilities {
 	.scrollbar-minimal {
 		scrollbar-width: thin;

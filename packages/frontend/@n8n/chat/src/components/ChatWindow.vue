@@ -31,7 +31,7 @@ function toggle() {
 
 <template>
 	<div
-		class="absolute z-50 bottom-4 right-4 h-full w-full flex flex-col items-end justify-end gap-4 md:mx-auto md:my-auto md:max-h-[52rem] md:max-w-[28rem]"
+		class="fixed z-50 bottom-4 right-4 h-full w-full flex flex-col items-end justify-end gap-4 md:mx-auto md:my-auto md:max-h-[52rem] md:max-w-[28rem]"
 	>
 		<Transition
 			enter-active-class="transition-all duration-150 ease-in-out"
